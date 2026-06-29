@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HexEmpire — Гексагональная стратегия</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="start-menu" class="overlay">
+    <div class="menu-box">
+      <div class="menu-title">⬡ HexEmpire</div>
+      <div class="menu-sub">Гексагональная стратегия с событиями и 4-мя фракциями</div>
+
+      <div class="menu-row">
+        <div class="menu-label">Количество игроков</div>
+        <div class="seg">
+          <button class="seg-btn" data-players="2">1 vs 1</button>
+          <button class="seg-btn active" data-players="4">1v1v1v1</button>
+        </div>
+      </div>
+
+      <div class="menu-row">
+        <div class="menu-label">Размер карты</div>
+        <div class="seg">
+          <button class="seg-btn" data-size="9">Малая</button>
+          <button class="seg-btn active" data-size="13">Большая</button>
+          <button class="seg-btn" data-size="17">Огромная</button>
+        </div>
+      </div>
+
+      <div class="menu-row">
+        <div class="menu-label">Сложность ИИ</div>
+        <div class="seg">
+          <button class="seg-btn" data-diff="easy">Лёгкий</button>
+          <button class="seg-btn active" data-diff="normal">Средний</button>
+          <button class="seg-btn" data-diff="hard">Сложный</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary menu-start" id="start-btn">⚔ Начать битву</button>
+
+      <div class="menu-tip">
+        ЛКМ по соседней клетке — захват.
+        <b>👤 Профиль</b> — сменить тему/имя.
+        <b>🛒 Магазин</b> — купить косметику.
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo">⬡ HexEmpire</div>
+
+    <div class="stats">
+      <div class="stat-block">
+        <span class="stat-label">Раунд</span>
+        <span class="stat-value turn-val" id="turn-num">1</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Захватов</span>
+        <span class="stat-value captures-val" id="captures-info">0/3</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Ваше золото</span>
+        <span class="stat-value player-val" id="player-gold">12</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-label">Ваш доход</span>
+        <span class="stat-value player-val" id="player-income">+0/ход</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="turn-pill" id="turn-pill">
+        <span class="turn-pill-dot"></span>
+        <span id="turn-pill-text">Ход: Игрок</span>
+      </div>
+      <button class="btn btn-primary" id="end-turn-btn">Завершить ход →</button>
+      <button class="btn" id="profile-btn">👤 Профиль</button>
+      <button class="btn" id="shop-btn">🛒 Магазин</button>
+      <button class="btn btn-danger" id="restart-btn">↺ Меню</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Фракции</div>
+        <div id="factions-list"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Активные события</div>
+        <div id="active-events">
+          <div class="muted-italic">Нет активных событий</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Легенда</div>
+        <div class="legend-item">
+          <div class="legend-hex" style="background:var(--col-plains,#4a7c3f)"></div>
+          Равнина (+1 зол, 2 / 4)
+        </div>
+        <div class="legend-item">
+          <div class="legend-hex" style="background:var(--col-forest,#1e4d1a)"></div>
+          Лес (+2 зол, 3 / 6)
+        </div>
+        <div class="legend-item">
+          <div class="legend-hex" style="background:var(--col-mountain,#6b5b45)"></div>
+          Горы (+3 зол, 4 / 8)
+        </div>
+        <div class="legend-item">
+          <div class="legend-hex" style="background:var(--col-water,#1a3a6b)"></div>
+        </div>
+        <div class="legend-item muted-italic" style="margin-top:6px">
+          Цена: нейтраль / вражеская
+        </div>
+      </div>
+
+      <div id="cell-info" class="sidebar-section">
+        <em class="muted-italic">Наведите на клетку для информации</em>
+      </div>
+    </div>
+
+    <div class="canvas-area">
+      <canvas id="gameCanvas"></canvas>
+      <div id="hint-bar">Нажмите на смежную клетку чтобы захватить её</div>
+      <div id="event-banner"></div>
+
+      <div id="overlay">
+        <div class="overlay-box">
+          <div class="overlay-title" id="overlay-title">Победа!</div>
+          <div class="overlay-sub" id="overlay-sub">...</div>
+          <button class="btn btn-primary" id="overlay-restart">В меню</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-panel">
+      <div class="log-header">Журнал событий</div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <div id="profile-modal" class="overlay">
+    <div class="profile-box">
+      <div class="profile-header">
+        <div class="profile-title">👤 Профиль</div>
+        <button class="close-btn" id="profile-close">×</button>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-label">Никнейм</div>
+        <input type="text" class="profile-input" id="profile-name" maxlength="16" placeholder="Игрок">
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-label">
+          Тема карты <span class="profile-hint">одна активна</span>
+        </div>
+        <div class="theme-picker" id="theme-picker"></div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-label">
+          Скины фракций <span class="profile-hint">можно несколько</span>
+        </div>
+        <div class="skin-picker" id="skin-picker"></div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn btn-primary" id="profile-save">💾 Сохранить</button>
+        <button class="btn" id="profile-shop-link">🛒 Магазин</button>
+      </div>
+
+      <div class="profile-tip">Изменения применяются сразу. Профиль хранится в этом браузере.</div>
+    </div>
+  </div>
+
+  <div id="shop-modal" class="overlay">
+    <div class="shop-box">
+      <div class="shop-header">
+        <div class="shop-title">🛒 Косметический магазин</div>
+        <button class="close-btn" id="shop-close">×</button>
+      </div>
+      <div class="shop-sub">Косметика привязана к браузеру. Не влияет на баланс.</div>
+      <div class="shop-grid" id="shop-grid"></div>
+      <div class="shop-footer">
+        <button class="btn" id="shop-reset">Сбросить покупки</button>
+        <div class="shop-owned-list" id="shop-owned-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip">
+    <div class="tt-title" id="tt-title">—</div>
+    <div class="tt-row"><span>Тип:</span><span class="tt-val" id="tt-terrain">—</span></div>
+    <div class="tt-row"><span>Владелец:</span><span class="tt-val" id="tt-owner">—</span></div>
+    <div class="tt-row"><span>Доход:</span><span class="tt-val" id="tt-income">—</span></div>
+    <div class="tt-row"><span>Захват:</span><span class="tt-val" id="tt-cost">—</span></div>
+  </div>
+
+  <script src="shop.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
